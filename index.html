@@ -1,17 +1,227 @@
-점심 & 퇴근 타이머
-    
-    
-    
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>점심 & 퇴근 타이머</title>
+    <!-- 👇 PWA 설정 (이 줄을 꼭 추가해야 앱처럼 작동합니다) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <style>
+        /* --- 이 부분은 이전 답변의 스타일과 동일합니다 --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
 
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            max-width: 420px;
+            width: 100%;
+        }
 
-    
-        🍱 점심시간까지 (11:30)
-        00:00:00
-        계산 중...
+        .card {
+            background: #1e293b;
+            padding: 1.8rem;
+            border-radius: 1.2rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            border: 1px solid #334155;
+            /* 👇 글자 정렬 추가 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card.lunch {
+            border-top: 4px solid #f59e0b;
+        }
+
+        .card.leave {
+            border-top: 4px solid #38bdf8;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 0.8rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .timer-display {
+            font-size: 2.8rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            margin-bottom: 0.5rem;
+            /* 👇 글자가 작을 때 중앙 정렬 */
+            width: 100%;
+            text-align: center;
+        }
+
+        .lunch .timer-display {
+            color: #fbbf24;
+        }
+
+        .leave .timer-display {
+            color: #38bdf8;
+        }
+
+        .status-message {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            min-height: 1.4rem;
+        }
+
+        .progress-bg {
+            background-color: #334155;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 1rem;
+            /* 👇 게이지 너비 고정 */
+            width: 100%;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 1s linear;
+        }
+
+        .lunch .progress-fill {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+
+        .leave .progress-fill {
+            background: linear-gradient(90deg, #0284c7, #38bdf8);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 점심시간 카운트다운 카드 -->
+    <div class="card lunch">
+        <h2>🍱 점심시간까지 (11:30)</h2>
+        <div class="timer-display" id="lunch-timer">00:00:00</div>
+        <div class="status-message" id="lunch-msg">계산 중...</div>
+        <div class="progress-bg">
+            <div class="progress-fill" id="lunch-progress"></div>
+        </div>
+    </div>
+
+    <!-- 퇴근시간 카운트다운 카드 -->
+    <div class="card leave">
+        <h2>🔥 퇴근시간까지 (18:00)</h2>
+        <div class="timer-display" id="leave-timer">00:00:00</div>
+        <div class="status-message" id="leave-msg">계산 중...</div>
+        <div class="progress-bg">
+            <div class="progress-fill" id="leave-progress"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 이 부분은 이전 답변의 스크립트와 동일합니다 ---
+    const WORK_START_HOUR = 9;   // 출근 시간 (09:00)
+    const LUNCH_HOUR = 11;       // 점심 시간 (11:30)
+    const LUNCH_MIN = 30;
+    const LEAVE_HOUR = 18;       // 퇴근 시간 (18:00)
+    const LEAVE_MIN = 0;
+
+    function updateTimers() {
+        const now = new Date();
+
+        // 1. 점심시간 계산
+        const lunchTime = new Date();
+        lunchTime.setHours(LUNCH_HOUR, LUNCH_MIN, 0, 0);
         
-    
-    
-        🔥 퇴근시간까지 (18:00)
-        00:00:00
-        계산 중...
+        const startTime = new Date();
+        startTime.setHours(WORK_START_HOUR, 0, 0, 0);
+
+        const lunchDiff = lunchTime - now;
+
+        if (lunchDiff <= 0) {
+            document.getElementById('lunch-timer').textContent = "00:00:00";
+            document.getElementById('lunch-msg').textContent = "😋 즐거운 점심시간입니다! 맛있게 드세요!";
+            document.getElementById('lunch-progress').style.width = "100%";
+        } else {
+            const h = String(Math.floor(lunchDiff / 3600000)).padStart(2, '0');
+            const m = String(Math.floor((lunchDiff / 60000) % 60)).padStart(2, '0');
+            const s = String(Math.floor((lunchDiff / 1000) % 60)).padStart(2, '0');
+            document.getElementById('lunch-timer').textContent = `${h}:${m}:${s}`;
+
+            // 문구 지정
+            if (lunchDiff > 2 * 3600 * 1000) {
+                document.getElementById('lunch-msg').textContent = "오전 업무 힘내세요! ☕";
+            } else if (lunchDiff > 30 * 60 * 1000) {
+                document.getElementById('lunch-msg').textContent = "조금만 참으면 밥 먹습니다! 🍚";
+            } else {
+                document.getElementById('lunch-msg').textContent = "메뉴 결정하셨나요? 거의 다 왔어요! 🍕";
+            }
+
+            // 게이지
+            const total = lunchTime - startTime;
+            const elapsed = now - startTime;
+            let pct = (elapsed / total) * 100;
+            document.getElementById('lunch-progress').style.width = `${Math.min(Math.max(pct, 0), 100)}%`;
+        }
+
+        // 2. 퇴근시간 계산
+        const leaveTime = new Date();
+        leaveTime.setHours(LEAVE_HOUR, LEAVE_MIN, 0, 0);
+
+        const leaveDiff = leaveTime - now;
+
+        if (leaveDiff <= 0) {
+            document.getElementById('leave-timer').textContent = "00:00:00";
+            document.getElementById('leave-msg').textContent = "🎉 칼퇴 성공! 오늘 하루도 정말 고생 많으셨어요!";
+            document.getElementById('leave-progress').style.width = "100%";
+        } else {
+            const h = String(Math.floor(leaveDiff / 3600000)).padStart(2, '0');
+            const m = String(Math.floor((leaveDiff / 60000) % 60)).padStart(2, '0');
+            const s = String(Math.floor((leaveDiff / 1000) % 60)).padStart(2, '0');
+            document.getElementById('leave-timer').textContent = `${h}:${m}:${s}`;
+
+            // 문구 지정
+            if (leaveDiff > 4 * 3600 * 1000) {
+                document.getElementById('leave-msg').textContent = "오늘 하루도 천천히 가봅시다! 🏃‍♂️";
+            } else if (leaveDiff > 2 * 3600 * 1000) {
+                document.getElementById('leave-msg').textContent = "오후도 반 이상 지나갔어요! 🚀";
+            } else {
+                document.getElementById('leave-msg').textContent = "슬슬 오늘 할 일 정리해볼까요? 🎒";
+            }
+
+            // 게이지
+            const total = leaveTime - startTime;
+            const elapsed = now - startTime;
+            let pct = (elapsed / total) * 100;
+            document.getElementById('leave-progress').style.width = `${Math.min(Math.max(pct, 0), 100)}%`;
+        }
+    }
+
+    updateTimers();
+    setInterval(updateTimers, 1000);
+
+    // 👇 앱 캐싱을 위한 서비스 워커 등록 코드 추가 (이게 있어야 완전히 독립 앱처럼 작동합니다)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+</script>
+
+</body>
+</html>
