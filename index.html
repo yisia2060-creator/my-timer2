@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>점심 & 퇴근 타이머</title>
-    <!-- 👇 PWA 설정 (이 줄을 꼭 추가해야 앱처럼 작동합니다) -->
+    <title>퇴근 직장인 RPG</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#0d0e15">
+    <!-- 레트로 픽셀 폰트 로드 -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DungGeunMo&display=swap" rel="stylesheet">
     <style>
-        /* --- 이 부분은 이전 답변의 스타일과 동일합니다 --- */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: 'DungGeunMo', monospace;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
+            background-color: #0d0e15;
+            color: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -26,200 +26,246 @@
             padding: 1rem;
         }
 
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+        .game-card {
+            background-color: #1a1c23;
+            border: 4px solid #fff;
+            box-shadow: 6px 6px 0px #000, -6px -6px 0px #2a2d3d;
+            border-radius: 4px;
+            padding: 1.5rem;
             max-width: 420px;
             width: 100%;
         }
 
-        .card {
-            background: #1e293b;
-            padding: 1.8rem;
-            border-radius: 1.2rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        .header {
             text-align: center;
-            border: 1px solid #334155;
-            /* 👇 글자 정렬 추가 */
+            border-bottom: 2px dashed #444;
+            padding-bottom: 0.8rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .header h1 {
+            font-size: 1.3rem;
+            color: #f6d619;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        /* 캐릭터 영역 */
+        .character-box {
             display: flex;
-            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            background: #111218;
+            border: 2px solid #333;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            position: relative;
         }
 
-        .card.lunch {
-            border-top: 4px solid #f59e0b;
+        .pixel-char {
+            font-size: 2.5rem;
+            animation: bounce 0.8s infinite alternate;
         }
 
-        .card.leave {
-            border-top: 4px solid #38bdf8;
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-6px); }
         }
 
-        h2 {
-            font-size: 1.2rem;
-            margin-bottom: 0.8rem;
-            color: #94a3b8;
-            font-weight: 600;
-        }
-
-        .timer-display {
-            font-size: 2.8rem;
-            font-weight: 700;
-            font-variant-numeric: tabular-nums;
-            margin-bottom: 0.5rem;
-            /* 👇 글자가 작을 때 중앙 정렬 */
-            width: 100%;
-            text-align: center;
-        }
-
-        .lunch .timer-display {
-            color: #fbbf24;
-        }
-
-        .leave .timer-display {
-            color: #38bdf8;
-        }
-
-        .status-message {
-            font-size: 0.95rem;
-            color: #cbd5e1;
-            min-height: 1.4rem;
-        }
-
-        .progress-bg {
-            background-color: #334155;
-            height: 8px;
+        .speech-bubble {
+            background: #fff;
+            color: #000;
+            padding: 0.6rem;
+            font-size: 0.85rem;
             border-radius: 4px;
-            overflow: hidden;
-            margin-top: 1rem;
-            /* 👇 게이지 너비 고정 */
-            width: 100%;
+            position: relative;
+            max-width: 230px;
+            box-shadow: 3px 3px 0px #000;
+            line-height: 1.3;
         }
 
-        .progress-fill {
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-width: 5px 8px 5px 0;
+            border-style: solid;
+            border-color: transparent #fff transparent transparent;
+        }
+
+        /* 퀘스트 (타이머) 블록 */
+        .quest-block {
+            margin-bottom: 1.2rem;
+            background: #232635;
+            padding: 1rem;
+            border: 2px solid #444;
+        }
+
+        .quest-title {
+            font-size: 0.95rem;
+            color: #4ef084;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .timer-val {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 1.3rem;
+            color: #fff;
+            text-align: center;
+            margin: 0.6rem 0;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        /* HP 게이지 스타일 */
+        .hp-bar-container {
+            background: #000;
+            border: 2px solid #555;
+            height: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hp-bar-fill {
             height: 100%;
             width: 0%;
             transition: width 1s linear;
         }
 
-        .lunch .progress-fill {
-            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        .lunch-hp .hp-bar-fill { background: linear-gradient(90deg, #ff9900, #ffcc00); }
+        .leave-hp .hp-bar-fill { background: linear-gradient(90deg, #0088ff, #00d5ff); }
+
+        .hp-text {
+            position: absolute;
+            right: 5px;
+            top: 1px;
+            font-size: 0.7rem;
+            color: #fff;
+            text-shadow: 1px 1px 0px #000;
+            font-family: 'Press Start 2P', monospace;
         }
 
-        .leave .progress-fill {
-            background: linear-gradient(90deg, #0284c7, #38bdf8);
+        .system-log {
+            font-size: 0.75rem;
+            color: #888;
+            text-align: center;
+            margin-top: 1rem;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- 점심시간 카운트다운 카드 -->
-    <div class="card lunch">
-        <h2>🍱 점심시간까지 (11:30)</h2>
-        <div class="timer-display" id="lunch-timer">00:00:00</div>
-        <div class="status-message" id="lunch-msg">계산 중...</div>
-        <div class="progress-bg">
-            <div class="progress-fill" id="lunch-progress"></div>
+<div class="game-card">
+    <div class="header">
+        <h1>🗡️ QUEST: 칼퇴 대작전</h1>
+    </div>
+
+    <!-- 픽셀 캐릭터 & 말풍선 -->
+    <div class="character-box">
+        <div class="pixel-char" id="char-icon">👨‍💻</div>
+        <div class="speech-bubble" id="char-dialog">버그 수정을 지시받았다... 견뎌라!</div>
+    </div>
+
+    <!-- 점심시간 퀘스트 -->
+    <div class="quest-block">
+        <div class="quest-title">
+            <span>🍱 [QUEST 1] 점심시간 (11:30)</span>
+        </div>
+        <div class="timer-val" id="lunch-timer">00:00:00</div>
+        <div class="hp-bar-container lunch-hp">
+            <div class="hp-bar-fill" id="lunch-hp"></div>
+            <div class="hp-text" id="lunch-pct">0%</div>
         </div>
     </div>
 
-    <!-- 퇴근시간 카운트다운 카드 -->
-    <div class="card leave">
-        <h2>🔥 퇴근시간까지 (18:00)</h2>
-        <div class="timer-display" id="leave-timer">00:00:00</div>
-        <div class="status-message" id="leave-msg">계산 중...</div>
-        <div class="progress-bg">
-            <div class="progress-fill" id="leave-progress"></div>
+    <!-- 퇴근시간 퀘스트 -->
+    <div class="quest-block">
+        <div class="quest-title">
+            <span>🔥 [FINAL QUEST] 칼퇴근 (18:00)</span>
+        </div>
+        <div class="timer-val" id="leave-timer">00:00:00</div>
+        <div class="hp-bar-container leave-hp">
+            <div class="hp-bar-fill" id="leave-hp"></div>
+            <div class="hp-text" id="leave-pct">0%</div>
         </div>
     </div>
+
+    <div class="system-log">SYSTEM: 매초 퇴근 게이지 충전 중...</div>
 </div>
 
 <script>
-    // --- 이 부분은 이전 답변의 스크립트와 동일합니다 ---
-    const WORK_START_HOUR = 9;   // 출근 시간 (09:00)
-    const LUNCH_HOUR = 11;       // 점심 시간 (11:30)
-    const LUNCH_MIN = 30;
-    const LEAVE_HOUR = 18;       // 퇴근 시간 (18:00)
-    const LEAVE_MIN = 0;
+    const WORK_START_HOUR = 9, LUNCH_HOUR = 11, LUNCH_MIN = 30, LEAVE_HOUR = 18, LEAVE_MIN = 0;
 
-    function updateTimers() {
+    function updateGame() {
         const now = new Date();
+        const startTime = new Date(); startTime.setHours(WORK_START_HOUR, 0, 0, 0);
 
-        // 1. 점심시간 계산
-        const lunchTime = new Date();
-        lunchTime.setHours(LUNCH_HOUR, LUNCH_MIN, 0, 0);
-        
-        const startTime = new Date();
-        startTime.setHours(WORK_START_HOUR, 0, 0, 0);
-
+        // 1. 점심시간
+        const lunchTime = new Date(); lunchTime.setHours(LUNCH_HOUR, LUNCH_MIN, 0, 0);
         const lunchDiff = lunchTime - now;
 
         if (lunchDiff <= 0) {
-            document.getElementById('lunch-timer').textContent = "00:00:00";
-            document.getElementById('lunch-msg').textContent = "😋 즐거운 점심시간입니다! 맛있게 드세요!";
-            document.getElementById('lunch-progress').style.width = "100%";
+            document.getElementById('lunch-timer').textContent = "COMPLETED!";
+            document.getElementById('lunch-hp').style.width = "100%";
+            document.getElementById('lunch-pct').textContent = "100%";
         } else {
             const h = String(Math.floor(lunchDiff / 3600000)).padStart(2, '0');
             const m = String(Math.floor((lunchDiff / 60000) % 60)).padStart(2, '0');
             const s = String(Math.floor((lunchDiff / 1000) % 60)).padStart(2, '0');
             document.getElementById('lunch-timer').textContent = `${h}:${m}:${s}`;
-
-            // 문구 지정
-            if (lunchDiff > 2 * 3600 * 1000) {
-                document.getElementById('lunch-msg').textContent = "오전 업무 힘내세요! ☕";
-            } else if (lunchDiff > 30 * 60 * 1000) {
-                document.getElementById('lunch-msg').textContent = "조금만 참으면 밥 먹습니다! 🍚";
-            } else {
-                document.getElementById('lunch-msg').textContent = "메뉴 결정하셨나요? 거의 다 왔어요! 🍕";
-            }
-
-            // 게이지
-            const total = lunchTime - startTime;
-            const elapsed = now - startTime;
-            let pct = (elapsed / total) * 100;
-            document.getElementById('lunch-progress').style.width = `${Math.min(Math.max(pct, 0), 100)}%`;
+            let pct = Math.min(Math.max(((now - startTime) / (lunchTime - startTime)) * 100, 0), 100);
+            document.getElementById('lunch-hp').style.width = `${pct}%`;
+            document.getElementById('lunch-pct').textContent = `${Math.floor(pct)}%`;
         }
 
-        // 2. 퇴근시간 계산
-        const leaveTime = new Date();
-        leaveTime.setHours(LEAVE_HOUR, LEAVE_MIN, 0, 0);
-
+        // 2. 퇴근시간
+        const leaveTime = new Date(); leaveTime.setHours(LEAVE_HOUR, LEAVE_MIN, 0, 0);
         const leaveDiff = leaveTime - now;
 
+        const charIcon = document.getElementById('char-icon');
+        const charDialog = document.getElementById('char-dialog');
+
         if (leaveDiff <= 0) {
-            document.getElementById('leave-timer').textContent = "00:00:00";
-            document.getElementById('leave-msg').textContent = "🎉 칼퇴 성공! 오늘 하루도 정말 고생 많으셨어요!";
-            document.getElementById('leave-progress').style.width = "100%";
+            document.getElementById('leave-timer').textContent = "GAME CLEAR!";
+            document.getElementById('leave-hp').style.width = "100%";
+            document.getElementById('leave-pct').textContent = "100%";
+            charIcon.textContent = "🥳";
+            charDialog.textContent = "🎉 퇴근 퀘스트 완료!! 집으로 즉시 이동!";
         } else {
             const h = String(Math.floor(leaveDiff / 3600000)).padStart(2, '0');
             const m = String(Math.floor((leaveDiff / 60000) % 60)).padStart(2, '0');
             const s = String(Math.floor((leaveDiff / 1000) % 60)).padStart(2, '0');
             document.getElementById('leave-timer').textContent = `${h}:${m}:${s}`;
+            let pct = Math.min(Math.max(((now - startTime) / (leaveTime - startTime)) * 100, 0), 100);
+            document.getElementById('leave-hp').style.width = `${pct}%`;
+            document.getElementById('leave-pct').textContent = `${Math.floor(pct)}%`;
 
-            // 문구 지정
-            if (leaveDiff > 4 * 3600 * 1000) {
-                document.getElementById('leave-msg').textContent = "오늘 하루도 천천히 가봅시다! 🏃‍♂️";
-            } else if (leaveDiff > 2 * 3600 * 1000) {
-                document.getElementById('leave-msg').textContent = "오후도 반 이상 지나갔어요! 🚀";
+            // 게임 캐릭터 상태 변경 (남은 시간별)
+            if (leaveDiff > 5 * 3600 * 1000) {
+                charIcon.textContent = "🥱";
+                charDialog.textContent = "출근하자마자 퇴근하고 싶다... HP 충전 중.";
+            } else if (leaveDiff > 3 * 3600 * 1000) {
+                charIcon.textContent = "☕";
+                charDialog.textContent = "카페인을 섭취하여 집중력이 +10 상승했다!";
+            } else if (leaveDiff > 1 * 3600 * 1000) {
+                charIcon.textContent = "💻";
+                charDialog.textContent = "마지막 스퍼트! 부스터 가동 준비!";
             } else {
-                document.getElementById('leave-msg').textContent = "슬슬 오늘 할 일 정리해볼까요? 🎒";
+                charIcon.textContent = "🎒";
+                charDialog.textContent = "가방 싸기 스킬 발동! 칼퇴 준비 완료!";
             }
-
-            // 게이지
-            const total = leaveTime - startTime;
-            const elapsed = now - startTime;
-            let pct = (elapsed / total) * 100;
-            document.getElementById('leave-progress').style.width = `${Math.min(Math.max(pct, 0), 100)}%`;
         }
     }
 
-    updateTimers();
-    setInterval(updateTimers, 1000);
+    updateGame();
+    setInterval(updateGame, 1000);
 
-    // 👇 앱 캐싱을 위한 서비스 워커 등록 코드 추가 (이게 있어야 완전히 독립 앱처럼 작동합니다)
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+        navigator.serviceWorker.register('sw.js');
     }
 </script>
 
